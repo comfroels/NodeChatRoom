@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+	<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+	
+  </head>
+  <body>
+    <div class="row">
+    	<div class="col-md-12">
+    		<h1><%= title %> <small>Because we all need to chat a little...</small></h1>		
+    	</div>
+    </div>
+    <br>
+    <br>
+    <div class="row">
+    	<div class="col-md-6">
+    		<div id="conversation">
+    			
+    		</div>
+    	</div>
+    	<div class="col-md-6">
+    		<form role="form">
+    			<div class="form-group">
+    				<label for="message">Message:</label>
+    				<textarea name="message" id="msg" cols="50" rows="3" class="form-control" placeholder="Enter Message..."></textarea>
+    			</div>
+    		</form>
+			<button class="btn btn-danger btn-lg btn-block" id="send">Send</button>
+    	</div>
+    </div>
+    <script>
+		var name = prompt('What is your name?');
+		var session = "";
+		io = io.connect();
+		//say a new user joined
+		io.emit('add_user',{user_name:name});
+		//get user session number
+		io.emit('get_sess');
+		io.on('sess',function(data){
+			session = data.id;
+		});
+		//listen for a new user
+		io.on('new_user',function(data){
+			$('#conversation').append('<p>'+data.name+' just joined the session</p>');
+		});
+		//welcome the user
+		io.on('welcome',function(data){
+			$('#conversation').append('<p>Welcome '+data.name+' to the chat world!</p>');
+			for(var i = 0; i < data.msg.length; i++) {
+				$('#conversation').append(data.msg[i]);
+			}
+		});
+		//user left
+		io.on('user_gone',function(data){
+			$('#conversation').append('<p>'+data.name+' just left the chat room... :(');
+		});
+		//add message
+		$('#send').on('click',function(){
+			var msg = $('#msg').val();
+			io.emit('new_message',{message:msg});
+			$('#msg').val('');
+		});
+		//get messages
+		io.on('view_message',function(data){
+			$('#conversation').append(data.msg);
+			if (data.id == session) {
+				$('#name'+data.count).css('color','#B379AE');
+			}
+			else
+			{
+				$('#name'+data.count).css('color','#79B37E');
+			}
+			
+		});
+
+
+
+	</script> 
+  </body>
+</html>
